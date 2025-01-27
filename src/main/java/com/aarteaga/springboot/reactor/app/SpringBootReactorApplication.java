@@ -1,6 +1,8 @@
 package com.aarteaga.springboot.reactor.app;
 
+import com.aarteaga.springboot.reactor.app.models.Comentarios;
 import com.aarteaga.springboot.reactor.app.models.Usuario;
+import com.aarteaga.springboot.reactor.app.models.UsuarioComentarios;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -25,8 +27,24 @@ public class SpringBootReactorApplication implements CommandLineRunner{
 		//ejemploIterable();
 		//ejemploFlatMap();
 		//ejemploToString();
-		ejemploCollectList();
+		//ejemploCollectList();
+		ejemploUsuarioComentariosFlatMap();
+	}
 
+	public void ejemploUsuarioComentariosFlatMap(){
+		Mono<Usuario> usuarioMono = Mono.fromCallable(() -> new Usuario("Jhon", "Doe"));
+		Mono<Comentarios> comentariosMono  = Mono.fromCallable(() -> {
+			Comentarios comentarios = new Comentarios();
+			comentarios.addComentario("Hola pepe, qué tal");
+			comentarios.addComentario("Mañana voy a la playa!!!");
+			comentarios.addComentario("Estoy tomando el curso de spring con reactor");
+			return comentarios;
+		});
+
+
+		Mono<UsuarioComentarios> uc = usuarioMono.flatMap(u -> comentariosMono.map(c -> new UsuarioComentarios(u, c)));
+
+		uc.subscribe(usuariocomentario -> log.info(usuariocomentario.toString()));
 	}
 
 	public void ejemploCollectList() throws Exception {
