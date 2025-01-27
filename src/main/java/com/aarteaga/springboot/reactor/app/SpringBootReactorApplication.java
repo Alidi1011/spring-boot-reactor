@@ -8,6 +8,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SpringBootApplication
 public class SpringBootReactorApplication implements CommandLineRunner{
@@ -17,10 +21,53 @@ public class SpringBootReactorApplication implements CommandLineRunner{
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBootReactorApplication.class, args);
 	}
-
-	@Override
 	public void run(String... args) throws Exception {
-		Flux<String> nombres = Flux.just("Roxana Guzmán", "Amelia Fulano", "Alexa Sultano", "Diego Almaro", "Sebastian Llosa", "Bruce Lee", "Bruce Willis");
+		//ejemploIterable();
+		ejemploFlatMap();
+
+	}
+
+	public void ejemploFlatMap() throws Exception {
+		List<String> usuariosList = new ArrayList<>();
+		usuariosList.add("Roxana Guzmán");
+		usuariosList.add("Amelia Fulano");
+		usuariosList.add("Alexa Sultano");
+		usuariosList.add("Diego Almaro");
+		usuariosList.add("Sebastian Llosa");
+		usuariosList.add("Bruce Lee");
+		usuariosList.add("Bruce Willis");
+
+		Flux.fromIterable(usuariosList)
+				.map(nombre -> new Usuario(nombre.split(" ")[1], nombre.split(" ")[0].toUpperCase()))
+				.flatMap(usuario -> {
+					if(usuario.getNombre().equalsIgnoreCase("bruce")){
+						return Mono.just(usuario);
+					} else {
+						return Mono.empty();
+					}
+				})
+				.map(usuario -> {
+					String nombre = usuario.getNombre().toLowerCase();
+					usuario.setNombre(nombre);
+					return usuario;
+				})
+				.subscribe(u -> log.info(u.toString()));
+	}
+
+	public void ejemploIterable() throws Exception {
+		List<String> usuariosList = new ArrayList<>();
+		usuariosList.add("Roxana Guzmán");
+		usuariosList.add("Amelia Fulano");
+		usuariosList.add("Alexa Sultano");
+		usuariosList.add("Diego Almaro");
+		usuariosList.add("Sebastian Llosa");
+		usuariosList.add("Bruce Lee");
+		usuariosList.add("Bruce Willis");
+
+		Flux<String> nombres = Flux.fromIterable(usuariosList);
+
+
+		//Flux<String> nombres = Flux.just("Roxana Guzmán", "Amelia Fulano", "Alexa Sultano", "Diego Almaro", "Sebastian Llosa", "Bruce Lee", "Bruce Willis");
 
 		//Es un observable
 		Flux<Usuario> usuarios = nombres.map(nombre -> new Usuario(nombre.split(" ")[1], nombre.split(" ")[0].toUpperCase()))
@@ -48,11 +95,6 @@ public class SpringBootReactorApplication implements CommandLineRunner{
 						log.info("Ha finalizado la ejecución del observable con éxito!");
 					}
 				});
-
-
-
-
-
 	}
 
 }
