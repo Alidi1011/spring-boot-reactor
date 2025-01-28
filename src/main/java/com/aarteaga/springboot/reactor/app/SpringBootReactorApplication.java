@@ -12,8 +12,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @SpringBootApplication
 public class SpringBootReactorApplication implements CommandLineRunner{
@@ -28,8 +30,58 @@ public class SpringBootReactorApplication implements CommandLineRunner{
 		//ejemploFlatMap();
 		//ejemploToString();
 		//ejemploCollectList();
-		ejemploUsuarioComentariosZipWithForma2();
+		//ejemploUsuarioComentariosZipWithForma2();
+		ejemploIntervalInfinito();
 	}
+
+	public void ejemploIntervalInfinito() throws InterruptedException {
+		CountDownLatch latch = new CountDownLatch(1);
+
+		Flux.interval(Duration.ofSeconds(1))
+				//.doOnTerminate(() -> latch.countDown()) //se ejecuta falla o no falle el flujo.
+				.doOnTerminate(latch::countDown)
+				.flatMap(i -> {
+					if(i >= 5){
+						return Flux.error(new InterruptedException("Solo, hasta 5!"));
+					}
+					return Flux.just(i);
+				})
+				.map(i -> "Hola " + i)
+				.retry(2)
+				.subscribe(s -> log.info(s.toString()), e -> log.error(e.getMessage()));
+		latch.await();
+	}
+
+	public void ejemploDelayElements() throws InterruptedException {
+		Flux<Integer> rango = Flux.range(1,12)
+				.delayElements(Duration.ofSeconds(1))
+				.doOnNext(r -> log.info(r.toString()));
+
+		rango.subscribe();
+		//rango.blockLast(); //Similar al subscribe pero bloquea hasta que se emita el ultimo item.
+
+		Thread.sleep(13000);
+	}
+
+	public void ejemploInterval(){
+		Flux<Integer> rango = Flux.range(1,12);
+		Flux<Long> retraso = Flux.interval(Duration.ofSeconds(3));
+
+		rango.zipWith(retraso, (ra, re) -> ra)
+				.doOnNext(i -> log.info(i.toString()))
+				//.subscribe();
+				.blockLast();
+	}
+
+	public void ejemploZipWithRangos() {
+		Flux<Integer> rangos = Flux.range(0,4);
+
+		Flux.just(1,2,3,4)
+				.map(i -> (i*2))
+				.zipWith(rangos, (uno, dos) -> String.format("Primer FLux: %d, Segundo FLux: %d", uno, dos))
+				.subscribe(texto -> log.info(texto));
+	}
+
 
 	public void ejemploUsuarioComentariosZipWithForma2(){
 		Mono<Usuario> usuarioMono = Mono.fromCallable(() -> new Usuario("Jhon", "Doe"));
