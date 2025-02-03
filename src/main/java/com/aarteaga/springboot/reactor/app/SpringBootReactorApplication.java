@@ -3,6 +3,8 @@ package com.aarteaga.springboot.reactor.app;
 import com.aarteaga.springboot.reactor.app.models.Comentarios;
 import com.aarteaga.springboot.reactor.app.models.Usuario;
 import com.aarteaga.springboot.reactor.app.models.UsuarioComentarios;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -33,7 +35,55 @@ public class SpringBootReactorApplication implements CommandLineRunner{
 		//ejemploToString();
 		//ejemploCollectList();
 		//ejemploUsuarioComentariosZipWithForma2();
-		ejemploIntervalDesdeCreate();
+		ejemploContraPresion();
+	}
+
+	public void ejemploContraPresion() {
+		//Recibe del observable todos los elementos enviados
+		/*Flux.range(1,10)
+				.log()
+				.subscribe( i -> log.info(i.toString()));*/
+
+		//Sobreescribiendo el Susbscriber para que reciba los elementos de acuerdo al limite configurado
+		/*Flux.range(1,10)
+				.log()
+				.subscribe(new Subscriber<Integer>() {
+
+					private Subscription s;
+					private Integer limite = 5;
+					private Integer consumido = 0;
+
+					@Override
+					public void onSubscribe(Subscription s) {
+						this.s = s;
+						s.request(limite);
+					}
+
+					@Override
+					public void onNext(Integer integer) {
+						log.info(integer.toString());
+						consumido++;
+						if(consumido == limite){
+							consumido = 0;
+							s.request(limite);
+						}
+					}
+
+					@Override
+					public void onError(Throwable t) {
+
+					}
+
+					@Override
+					public void onComplete() {
+
+					}
+				});*/
+
+		Flux.range(1,10)
+				.log()
+				.limitRate(2)
+				.subscribe( i -> log.info(i.toString()));
 	}
 
 	public void ejemploIntervalDesdeCreate() throws InterruptedException {
